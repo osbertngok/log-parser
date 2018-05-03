@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"sort"
 	"flag"
+	"errors"
 )
 
 type ParserHolder struct {
@@ -113,6 +114,30 @@ func handleInputStream(rd io.Reader, data chan<- string) {
 	close(data)
 }
 
+func subParseRecord(f interface{}, prefix string, ph *ParserHolder) error {
+	m := f.(map[string]interface{})
+	if m == nil {
+		return errors.New("not an object")
+	}
+	for k, v := range m {
+		switch v.(type) {
+		case string:
+			ph.AddPair(prefix + k, "string")
+		case float64:
+			ph.AddPair(prefix + k, "float64")
+		case bool:
+			ph.AddPair(prefix + k, "bool")
+		case []interface{}:
+			ph.AddPair(prefix + k, "array")
+		case map[string]interface{}:
+			subParseRecord(v, prefix + k + ".", ph)
+		default:
+			ph.AddPair(prefix + k, fmt.Sprintf("unknown(%T)", v))
+		}
+	}
+	return nil
+}
+
 func parseRecord(record string) (*ParserHolder, error) {
 	ph := NewParserHolder()
 	// Remove timestamp
@@ -127,20 +152,9 @@ func parseRecord(record string) (*ParserHolder, error) {
 		return nil, err
 	}
 	m := f.(map[string]interface{})
-	if m == nil {
-		return nil, fmt.Errorf("json %s is not an object", JSONstr)
-	}
-	// First layer
-	for k, v := range m {
-		switch v.(type) {
-		case string:
-			ph.AddPair(k, "string")
-		case float64:
-			ph.AddPair(k, "float64")
-		default:
-			ph.AddPair(k, "unknown")
-		}
-	}
+
+	subParseRecord(m, "", ph)
+
 	return ph, nil
 }
 
@@ -170,7 +184,7 @@ func main() {
 		if record != "" {
 			newPH, err := parseRecord(record)
 			if err != nil {
-				fmt.Printf("%v", err)
+				fmt.Printf("%v\n", err)
 				continue
 			}
 			if latestPH == nil {
@@ -178,7 +192,7 @@ func main() {
 			} else {
 				nPH, err := latestPH.Append(newPH)
 				if err != nil {
-					fmt.Printf("%v", err)
+					fmt.Printf("%v\n", err)
 					continue
 				}
 				latestPH = nPH
