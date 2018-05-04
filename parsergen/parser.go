@@ -1,18 +1,16 @@
-package main
+package parsergen
 
 import (
 	"bufio"
 	"encoding/json"
 	"errors"
-	"flag"
 	"fmt"
 	"io"
-	"os"
 	"strings"
 )
 
 type ParserHolder struct {
-	data map[string]map[string]int64
+	Data map[string]map[string]int64
 }
 
 func CopyMap(m map[string]int64) map[string]int64 {
@@ -24,40 +22,40 @@ func CopyMap(m map[string]int64) map[string]int64 {
 }
 
 func (ph *ParserHolder) AddPair(key string, innerType string) {
-	if _, ok := ph.data[key]; !ok {
-		ph.data[key] = make(map[string]int64)
+	if _, ok := ph.Data[key]; !ok {
+		ph.Data[key] = make(map[string]int64)
 	}
-	m := ph.data[key]
+	m := ph.Data[key]
 	m[innerType]++
 }
 
 func (ph *ParserHolder) DeepCopy() *ParserHolder {
 	ret := NewParserHolder()
-	for key, value := range ph.data {
-		ret.data[key] = CopyMap(value)
+	for key, value := range ph.Data {
+		ret.Data[key] = CopyMap(value)
 	}
 	return ret
 }
 
 func (ph1 *ParserHolder) Append(ph2 *ParserHolder) {
-	for k, v := range ph2.data {
-		if v1, ok := ph1.data[k]; ok {
+	for k, v := range ph2.Data {
+		if v1, ok := ph1.Data[k]; ok {
 			for k2, v2 := range v {
 				v1[k2] += v2
 			}
 		} else {
-			ph1.data[k] = CopyMap(v)
+			ph1.Data[k] = CopyMap(v)
 		}
 	}
 }
 
 func NewParserHolder() *ParserHolder {
 	ph := ParserHolder{}
-	ph.data = make(map[string]map[string]int64)
+	ph.Data = make(map[string]map[string]int64)
 	return &ph
 }
 
-func handleInputStream(rd io.Reader, data chan<- string) {
+func HandleInputStream(rd io.Reader, data chan<- string) {
 	reader := bufio.NewReader(rd)
 	var err error = nil
 	for {
@@ -112,7 +110,7 @@ func subParseRecord(f interface{}, prefix string, ph *ParserHolder) error {
 	return nil
 }
 
-func parseRecord(record string) (*ParserHolder, error) {
+func ParseRecord(record string) (*ParserHolder, error) {
 	ph := NewParserHolder()
 	// Remove timestamp
 	i := strings.Index(record, ",")
@@ -130,45 +128,4 @@ func parseRecord(record string) (*ParserHolder, error) {
 	subParseRecord(m, "", ph)
 
 	return ph, nil
-}
-
-func main() {
-
-	var filename string
-	flag.StringVar(&filename, "f", "", "file to read from")
-	var rd io.Reader = os.Stdin
-
-	// If filename is specified, override stdin
-	if filename != "" {
-		file, err := os.Open(filename)
-		if err != nil {
-			panic(err)
-		}
-		rd = file
-	}
-
-	var latestPH *ParserHolder = nil
-	data := make(chan string, 1000)
-
-	go handleInputStream(rd, data)
-
-	for record := range data {
-		if record != "" {
-			newPH, err := parseRecord(record)
-			if err != nil {
-				fmt.Printf("%s, %v\n", record, err)
-				continue
-			}
-			if latestPH == nil {
-				latestPH = newPH
-			} else {
-				latestPH.Append(newPH)
-			}
-		}
-	}
-	mapJSON, err := json.MarshalIndent(latestPH.data, "", "  ")
-	if err != nil {
-		panic(err)
-	}
-	fmt.Printf("%s\n", mapJSON)
 }
