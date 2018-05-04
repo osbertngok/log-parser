@@ -2,86 +2,60 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
+	"errors"
+	"flag"
 	"fmt"
 	"io"
 	"os"
 	"strings"
-	"encoding/json"
-	"sort"
-	"flag"
-	"errors"
 )
 
 type ParserHolder struct {
-	data map[string]string
+	data map[string]map[string]int64
+}
+
+func CopyMap(m map[string]int64) map[string]int64 {
+	ret := make(map[string]int64)
+	for k, v := range m {
+		ret[k] = v
+	}
+	return ret
 }
 
 func (ph *ParserHolder) AddPair(key string, innerType string) {
-	ph.data[key] = innerType
+	if _, ok := ph.data[key]; !ok {
+		ph.data[key] = make(map[string]int64)
+	}
+	m := ph.data[key]
+	m[innerType]++
 }
 
-func (ph1 *ParserHolder) Append(ph2 *ParserHolder) (*ParserHolder, error) {
-	keys1 := make([]string, 0)
-	for k, _ := range ph1.data {
-		keys1 = append(keys1, k)
-	}
-
-	keys2 := make([]string, 0)
-	for k, _ := range ph2.data {
-		keys2 = append(keys2, k)
-	}
-	sort.Strings(keys1)
-	sort.Strings(keys2)
-
+func (ph *ParserHolder) DeepCopy() *ParserHolder {
 	ret := NewParserHolder()
-	cursor1 := 0
-	cursor2 := 0
-	for cursor1 < len(keys1) || cursor2 < len(keys2) {
-		var key1, key2, value1, value2 string
+	for key, value := range ph.data {
+		ret.data[key] = CopyMap(value)
+	}
+	return ret
+}
 
-		if cursor1 != len(keys1) {
-			key1 = keys1[cursor1]
-			value1 = ph1.data[key1]
-		}
-		if cursor2 != len(keys2) {
-			key2 = keys2[cursor2]
-			value2 = ph2.data[key2]
-		}
-		if key1 == "" {
-			ret.AddPair(key2, value2)
-			cursor2++
-			continue
-		}
-		if key2 == "" {
-			ret.AddPair(key1, value1)
-			cursor1++
-			continue
-		}
-		switch {
-		case key1 < key2:
-			ret.AddPair(key1, value1)
-			cursor1++
-		case key1 > key2:
-			ret.AddPair(key2, value2)
-			cursor2++
-		default:
-			if ph1.data[key1] != ph2.data[key2] {
-				return nil, fmt.Errorf("key %s has different types: %s, %s", key1, value1, value2)
+func (ph1 *ParserHolder) Append(ph2 *ParserHolder) {
+	for k, v := range ph2.data {
+		if v1, ok := ph1.data[k]; ok {
+			for k2, v2 := range v {
+				v1[k2] += v2
 			}
-			ret.AddPair(key1, value1)
-			cursor1++
-			cursor2++
+		} else {
+			ph1.data[k] = CopyMap(v)
 		}
 	}
-	return ret, nil
 }
 
 func NewParserHolder() *ParserHolder {
 	ph := ParserHolder{}
-	ph.data = make(map[string]string)
+	ph.data = make(map[string]map[string]int64)
 	return &ph
 }
-
 
 func handleInputStream(rd io.Reader, data chan<- string) {
 	reader := bufio.NewReader(rd)
@@ -122,17 +96,17 @@ func subParseRecord(f interface{}, prefix string, ph *ParserHolder) error {
 	for k, v := range m {
 		switch v.(type) {
 		case string:
-			ph.AddPair(prefix + k, "string")
+			ph.AddPair(prefix+k, "string")
 		case float64:
-			ph.AddPair(prefix + k, "float64")
+			ph.AddPair(prefix+k, "float64")
 		case bool:
-			ph.AddPair(prefix + k, "bool")
+			ph.AddPair(prefix+k, "bool")
 		case []interface{}:
-			ph.AddPair(prefix + k, "array")
+			ph.AddPair(prefix+k, "array")
 		case map[string]interface{}:
-			subParseRecord(v, prefix + k + ".", ph)
+			subParseRecord(v, prefix+k+".", ph)
 		default:
-			ph.AddPair(prefix + k, fmt.Sprintf("unknown(%T)", v))
+			ph.AddPair(prefix+k, fmt.Sprintf("unknown(%T)", v))
 		}
 	}
 	return nil
@@ -158,8 +132,6 @@ func parseRecord(record string) (*ParserHolder, error) {
 	return ph, nil
 }
 
-
-
 func main() {
 
 	var filename string
@@ -184,20 +156,19 @@ func main() {
 		if record != "" {
 			newPH, err := parseRecord(record)
 			if err != nil {
-				fmt.Printf("%v\n", err)
+				fmt.Printf("%s, %v\n", record, err)
 				continue
 			}
 			if latestPH == nil {
 				latestPH = newPH
 			} else {
-				nPH, err := latestPH.Append(newPH)
-				if err != nil {
-					fmt.Printf("%v\n", err)
-					continue
-				}
-				latestPH = nPH
+				latestPH.Append(newPH)
 			}
 		}
 	}
-	fmt.Printf("%v", *latestPH)
+	mapJSON, err := json.MarshalIndent(latestPH.data, "", "  ")
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("%s\n", mapJSON)
 }
