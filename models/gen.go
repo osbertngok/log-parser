@@ -1,13 +1,11 @@
-// +build ignore
+//+build ignore
 
-package models
+package main
 
 import (
 	"github.com/osbertngok/log-parser/parsergen"
 	"os"
 )
-
-// go:generate go run gen.go
 
 func main() {
 	wf, err := os.Create("./dict.json")

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"encoding/json"
 )
 
 func CopyMap(m map[string]int64) map[string]int64 {
@@ -66,15 +67,17 @@ func (ph *ParserHolder) ToJSON() string {
 	for k, v := range ph.Data {
 		ret += "{\n"
 		ret += fmt.Sprintf("\t\t\"index\":%d,\n", ct)
-		ret += fmt.Sprintf("\t\t\"keyChains\": [%s],\n", strings.Split(k, "."))
-		ret += fmt.Sprintf("\t\t\"valueType\": \"%s\",\n", convertToType(v))
+		keyChainsStr, _ := json.Marshal(strings.Split(k, "."))
+		ret += fmt.Sprintf("\t\t\"keyChains\": %s,\n", keyChainsStr)
+		ret += fmt.Sprintf("\t\t\"valueType\": \"%s\"\n", convertToType(v))
 		ret += "\t}"
 		if ct != keyLength-1 {
 			ret += ", "
 		}
 		ct++
 	}
-	ret += "\n"
+	ret += "]\n"
+	ret += "}\n"
 	return ret
 }
 
