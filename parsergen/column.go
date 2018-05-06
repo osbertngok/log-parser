@@ -4,6 +4,7 @@ import (
 	"sort"
 	"strings"
 	"fmt"
+	"strconv"
 )
 
 type Column struct {
@@ -25,34 +26,53 @@ type Node struct {
 	Children           map[string]*Node
 }
 
-var rootFields = []*Node{
-	{
-		Index:              0,
-		LogName:            "",
-		DatabaseColumnName: "EventTime",
-		GoType:             "time.Time",
-		GoFieldName:        "EventTime",
-		Children:           nil,
-	},
-	{
-		Index:              1,
-		LogName:            "",
-		DatabaseColumnName: "Microsecond",
-		GoType:             "int64",
-		GoFieldName:        "Microsecond",
-		Children:           nil,
-	},
-	{
-		Index:              2,
-		LogName:            "",
-		DatabaseColumnName: "ControllerNo",
-		GoType:             "int64",
-		GoFieldName:        "ControllerNo",
-		Children:           nil,
-	},
-}
+var rootFields []*Node = nil
+const RESERVED_FUNDAMENTAL_FIELDS = 3
+const RESERVED_BITMAP_FIELDS = 10
 
-const RESERVED_COLUMNS_NO = 3
+const RESERVED_COLUMNS_NO = RESERVED_FUNDAMENTAL_FIELDS + RESERVED_BITMAP_FIELDS
+
+func getRootFields() []*Node {
+	if rootFields == nil {
+		rootFields =  []*Node{
+			{
+				Index:              0,
+				LogName:            "",
+				DatabaseColumnName: "EventTime",
+				GoType:             "time.Time",
+				GoFieldName:        "EventTime",
+				Children:           nil,
+			},
+			{
+				Index:              1,
+				LogName:            "",
+				DatabaseColumnName: "Microsecond",
+				GoType:             "int64",
+				GoFieldName:        "Microsecond",
+				Children:           nil,
+			},
+			{
+				Index:              2,
+				LogName:            "",
+				DatabaseColumnName: "ControllerNo",
+				GoType:             "int64",
+				GoFieldName:        "ControllerNo",
+				Children:           nil,
+			},
+		}
+		for i:= 0; i < RESERVED_BITMAP_FIELDS; i++ {
+			rootFields = append(rootFields, &Node{
+				Index:              int64(RESERVED_FUNDAMENTAL_FIELDS + i),
+				LogName:            "",
+				DatabaseColumnName: "Bitmap" + strconv.FormatInt(int64(i), 10),
+				GoType:             "uint64",
+				GoFieldName:        "Bitmap" + strconv.FormatInt(int64(i), 10),
+				Children:           nil,
+			})
+		}
+	}
+	return rootFields
+}
 
 func (n *Node) ToGoClass(prefix string, tab string) string {
 	tags := ""
@@ -73,7 +93,7 @@ func (n *Node) ToGoClass(prefix string, tab string) string {
 	} else {
 		ret += "struct {\n"
 		if n.GoFieldName == "" {
-			for _, node := range rootFields {
+			for _, node := range getRootFields() {
 				ret += node.ToGoClass(prefix+tab, tab)
 			}
 		}
