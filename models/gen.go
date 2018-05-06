@@ -9,10 +9,13 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"text/template"
 )
 
 const DICT_JSON_FILENAME = "./dict.json"
 const LOG_FILES_PATTERN = "../data/*.log"
+const RECORD_GO_FILE = "./record.go"
+const RECORD_TEMPLATE_FILENAME = "./record.txt.tmpl"
 
 func loadTable(t *parsergen.Table) bool {
 	fmt.Printf("Loading existing %s...\n", DICT_JSON_FILENAME)
@@ -60,6 +63,29 @@ func writeToJSONDict(t *parsergen.Table, filename string) error {
 	return nil
 }
 
+func writeToRecordStruct(t *parsergen.Table, filename string) error {
+	node := t.ToNode()
+	var (
+		err error
+		wf  *os.File
+		tpl *template.Template
+	)
+	if tpl, err = template.ParseFiles(RECORD_TEMPLATE_FILENAME); err != nil {
+		return err
+	}
+	if wf, err = os.Create(filename); err != nil {
+		return err
+	}
+	if err = tpl.Execute(wf, struct {
+		RecordClass string
+	}{
+		node.ToGoClass("", "    "),
+	}); err != nil {
+		return err
+	}
+	return nil
+}
+
 func main() {
 	var (
 		t     *parsergen.Table = nil
@@ -78,6 +104,10 @@ func main() {
 	}
 
 	if err = writeToJSONDict(t, DICT_JSON_FILENAME); err != nil {
+		panic(err)
+	}
+
+	if err = writeToRecordStruct(t, RECORD_GO_FILE); err != nil {
 		panic(err)
 	}
 

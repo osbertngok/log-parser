@@ -3,3 +3,4 @@
 .idea
 /models/*.json
 /models/*.log
+/models/record.go
