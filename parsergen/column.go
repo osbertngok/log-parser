@@ -1,8 +1,9 @@
 package parsergen
 
 import (
-	"strings"
 	"sort"
+	"strings"
+	"fmt"
 )
 
 type Column struct {
@@ -24,7 +25,43 @@ type Node struct {
 	Children           map[string]*Node
 }
 
+var rootFields = []*Node{
+	{
+		Index:              0,
+		LogName:            "",
+		DatabaseColumnName: "EventTime",
+		GoType:             "time.Time",
+		GoFieldName:        "EventTime",
+		Children:           nil,
+	},
+	{
+		Index:              1,
+		LogName:            "",
+		DatabaseColumnName: "Microsecond",
+		GoType:             "int64",
+		GoFieldName:        "Microsecond",
+		Children:           nil,
+	},
+	{
+		Index:              2,
+		LogName:            "",
+		DatabaseColumnName: "ControllerNo",
+		GoType:             "int64",
+		GoFieldName:        "ControllerNo",
+		Children:           nil,
+	},
+}
+
+const RESERVED_COLUMNS_NO = 3
+
 func (n *Node) ToGoClass(prefix string, tab string) string {
+	tags := ""
+	if n.LogName != "" {
+		tags += fmt.Sprintf(" json:\"%s\"", n.LogName)
+	}
+	if n.Index >= 0 {
+		tags += fmt.Sprintf(" index:%d", n.Index)
+	}
 	ret := prefix
 	if n.GoFieldName == "" {
 		ret += "type Record "
@@ -32,9 +69,14 @@ func (n *Node) ToGoClass(prefix string, tab string) string {
 		ret += prefix + n.GoFieldName + " "
 	}
 	if n.GoType != "" {
-		ret += n.GoType + "\n"
+		ret += n.GoType
 	} else {
 		ret += "struct {\n"
+		if n.GoFieldName == "" {
+			for _, node := range rootFields {
+				ret += node.ToGoClass(prefix+tab, tab)
+			}
+		}
 		keys := make([]string, 0)
 		for key, _ := range n.Children {
 			keys = append(keys, key)
@@ -44,8 +86,12 @@ func (n *Node) ToGoClass(prefix string, tab string) string {
 			v, _ := n.Children[key]
 			ret += v.ToGoClass(prefix+tab, tab)
 		}
-		ret += prefix + "}\n"
+		ret += prefix + "}"
 	}
+	if tags != "" {
+		ret += fmt.Sprintf("`%s`", strings.TrimLeft(tags, " "))
+	}
+	ret += "\n"
 	return ret
 }
 
@@ -157,7 +203,7 @@ func FromParserHolder(t *Table, ph *ParserHolder) *Table {
 
 	// Initialize hashmap
 	for _, item := range ret.Data {
-		m[strings.Join(item.KeyChains, ".")] = item.Index
+		m[strings.Join(item.KeyChains, ".")] = item.Index - RESERVED_COLUMNS_NO
 	}
 	for k, v := range ph.Data {
 		// Does it exist in map?
@@ -167,7 +213,7 @@ func FromParserHolder(t *Table, ph *ParserHolder) *Table {
 			}
 		} else {
 			ret.Data = append(ret.Data, Column{
-				Index:     cursor,
+				Index:     cursor + RESERVED_COLUMNS_NO,
 				KeyChains: strings.Split(k, "."),
 				ValueType: convertToType(v),
 			})
