@@ -26,7 +26,7 @@ func (t *Table) DeepCopy() *Table {
 	for index, item := range t.Data {
 		keyChains := make([]string, len(item.KeyChains))
 		copy(keyChains, item.KeyChains)
-		t.Data[index] = Column{
+		ret.Data[index] = Column{
 			Index:     item.Index,
 			KeyChains: keyChains,
 			ValueType: item.ValueType,
