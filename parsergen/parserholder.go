@@ -2,10 +2,10 @@ package parsergen
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"io"
 	"strings"
-	"encoding/json"
 )
 
 func CopyMap(m map[string]int64) map[string]int64 {

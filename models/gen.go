@@ -5,6 +5,7 @@ package main
 import (
 	"github.com/osbertngok/log-parser/parsergen"
 	"os"
+	"encoding/json"
 )
 
 func main() {
@@ -21,5 +22,10 @@ func main() {
 	defer rf.Close()
 
 	ph := parsergen.FromReader(rf)
-	wf.WriteString(ph.ToJSON())
+	t := parsergen.FromParserHolder(nil, ph)
+	jsonStr, err := json.MarshalIndent(t, "", "    ")
+	if err != nil {
+		panic(err)
+	}
+	wf.WriteString(string(jsonStr))
 }
