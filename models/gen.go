@@ -4,11 +4,11 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/osbertngok/log-parser/parsergen"
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"fmt"
 )
 
 const DICT_JSON_FILENAME = "./dict.json"
@@ -30,35 +30,55 @@ func loadTable(t *parsergen.Table) bool {
 	return err == nil
 }
 
-func enrich(filename string, t *parsergen.Table) *parsergen.Table {
+func enrich(filename string, t *parsergen.Table) (*parsergen.Table, error) {
 	fmt.Printf("Loading %s...\n", filename)
 	rf, err := os.Open(filename)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	defer rf.Close()
 	ph := parsergen.FromReader(rf)
-	return parsergen.FromParserHolder(t, ph)
+	return parsergen.FromParserHolder(t, ph), nil
+}
+
+func writeToJSONDict(t *parsergen.Table, filename string) error {
+	var (
+		jsonStr []byte
+		err     error
+		wf      *os.File
+	)
+	if jsonStr, err = json.MarshalIndent(t, "", "    "); err != nil {
+		return err
+	}
+	if wf, err = os.Create(filename); err != nil {
+		return err
+	}
+	defer wf.Close()
+	if _, err := wf.WriteString(string(jsonStr)); err != nil {
+		return err
+	}
+	return nil
 }
 
 func main() {
-	var t *parsergen.Table = nil
+	var (
+		t     *parsergen.Table = nil
+		files []string
+		err   error
+	)
 	loadTable(t)
 
-	wf, err := os.Create(DICT_JSON_FILENAME)
-	if err != nil {
+	if files, err = filepath.Glob(LOG_FILES_PATTERN); err != nil {
 		panic(err)
 	}
-	defer wf.Close()
-
-	files, err := filepath.Glob(LOG_FILES_PATTERN)
 	for _, filename := range files {
-		t = enrich(filename, t)
+		if t, err = enrich(filename, t); err != nil {
+			panic(err)
+		}
 	}
 
-	jsonStr, err := json.MarshalIndent(t, "", "    ")
-	if err != nil {
+	if err = writeToJSONDict(t, DICT_JSON_FILENAME); err != nil {
 		panic(err)
 	}
-	wf.WriteString(string(jsonStr))
+
 }
