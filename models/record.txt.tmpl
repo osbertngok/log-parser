@@ -30,7 +30,7 @@ func (r *Record) ToCSV() string {
 
     {{ range .Table.Data }}
         {{ if eq .ValueType "float64" }}
-            buffer.WriteString(fmt.Sprintf("\"%s,\"", strconv.FormatFloat(r{{ keyChainsToGoFields .KeyChains }}, 'f', 6, 64)))
+            buffer.WriteString(fmt.Sprintf("\"%s\",", strconv.FormatFloat(r{{ keyChainsToGoFields .KeyChains }}, 'f', 6, 64)))
         {{ end }}
         {{ if eq .ValueType "string" }}
             buffer.WriteString(fmt.Sprintf("\"%s\",", r{{ keyChainsToGoFields .KeyChains }}))

@@ -76,8 +76,8 @@ func ParseString(log string, controllerNo int64) (*Record, error) {
 	if err != nil {
 		return nil, err
 	}
-	record.Microsecond = timestamp.UnixNano() / 1000
-	record.EventTime = timestamp.Add(time.Duration(-1 * timestamp.UnixNano()))
+	record.Microsecond = int64(timestamp.Nanosecond()) / 1000
+	record.EventTime = timestamp.Add(time.Duration(-1 * timestamp.Nanosecond()) * time.Nanosecond)
 	JSONstr := log[i+1:]
 	var f interface{}
 	err = json.Unmarshal([]byte(JSONstr), &f)
