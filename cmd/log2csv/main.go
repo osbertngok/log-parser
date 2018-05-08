@@ -3,12 +3,16 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/osbertngok/log-parser/config"
 	"github.com/osbertngok/log-parser/models"
 	"io"
 	"os"
 )
 
 func main() {
+
+	cfg := config.New()
+
 	var filename string
 	var controllerNo int64
 	flag.StringVar(&filename, "f", "", "file to read from")
@@ -23,7 +27,7 @@ func main() {
 		}
 		rd = file
 	}
-	records := models.FromReader(rd, controllerNo)
+	records := models.FromReader(rd, controllerNo, cfg.Timezone)
 
 	for _, record := range records {
 		fmt.Printf("%s\n", record.ToCSV())

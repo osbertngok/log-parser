@@ -63,7 +63,11 @@ func subParseString(f interface{}, keyChains []string, record interface{}) error
 	}
 	return nil
 }
-func ParseString(log string, controllerNo int64) (*Record, error) {
+func ParseString(log string, controllerNo int64, tz string) (*Record, error) {
+	loc, err := time.LoadLocation(tz)
+	if err != nil {
+		return nil, err
+	}
 	record := NewRecord()
 	record.ControllerNo = controllerNo
 	// Remove timestamp
@@ -76,8 +80,14 @@ func ParseString(log string, controllerNo int64) (*Record, error) {
 	if err != nil {
 		return nil, err
 	}
+	eventDateString := log[:10]
+	eventDate, err := time.ParseInLocation("2006-01-02", eventDateString, loc)
+	if err != nil {
+		return nil, err
+	}
+	record.EventDate = eventDate
 	record.Microsecond = int64(timestamp.Nanosecond()) / 1000
-	record.EventTime = timestamp.Add(time.Duration(-1 * timestamp.Nanosecond()) * time.Nanosecond)
+	record.EventTime = timestamp.Add(time.Duration(-1*timestamp.Nanosecond()) * time.Nanosecond)
 	JSONstr := log[i+1:]
 	var f interface{}
 	err = json.Unmarshal([]byte(JSONstr), &f)
@@ -119,7 +129,7 @@ func handleInputStream(rd io.Reader, data chan<- string) {
 	close(data)
 }
 
-func FromReader(rd io.Reader, controllerNo int64) []*Record {
+func FromReader(rd io.Reader, controllerNo int64, tz string) []*Record {
 	var ret = make([]*Record, 0)
 	data := make(chan string, 1000)
 
@@ -127,7 +137,7 @@ func FromReader(rd io.Reader, controllerNo int64) []*Record {
 
 	for record := range data {
 		if record != "" {
-			newRecord, err := ParseString(record, controllerNo)
+			newRecord, err := ParseString(record, controllerNo, tz)
 			if err != nil {
 				fmt.Printf("%s, %v\n", record, err)
 				continue

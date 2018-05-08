@@ -28,7 +28,7 @@ type Node struct {
 
 var rootFields []*Node = nil
 
-const RESERVED_FUNDAMENTAL_FIELDS = 3
+const RESERVED_FUNDAMENTAL_FIELDS = 4
 const RESERVED_BITMAP_FIELDS = 10
 
 const RESERVED_COLUMNS_NO = RESERVED_FUNDAMENTAL_FIELDS + RESERVED_BITMAP_FIELDS
@@ -39,13 +39,21 @@ func getRootFields() []*Node {
 			{
 				Index:              0,
 				LogName:            "",
+				DatabaseColumnName: "EventDate",
+				GoType:             "time.Time",
+				GoFieldName:        "EventDate",
+				Children:           nil,
+			},
+			{
+				Index:              1,
+				LogName:            "",
 				DatabaseColumnName: "EventTime",
 				GoType:             "time.Time",
 				GoFieldName:        "EventTime",
 				Children:           nil,
 			},
 			{
-				Index:              1,
+				Index:              2,
 				LogName:            "",
 				DatabaseColumnName: "Microsecond",
 				GoType:             "int64",
@@ -53,7 +61,7 @@ func getRootFields() []*Node {
 				Children:           nil,
 			},
 			{
-				Index:              2,
+				Index:              3,
 				LogName:            "",
 				DatabaseColumnName: "ControllerNo",
 				GoType:             "int64",

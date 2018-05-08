@@ -14,6 +14,7 @@ import (
 func (r *Record) ToCSV() string {
     var buffer bytes.Buffer
 
+    buffer.WriteString(fmt.Sprintf("\"%s\",", r.EventDate.Format("2006-01-02")))
     buffer.WriteString(fmt.Sprintf("\"%s\",", r.EventTime.Format("2006-01-02 15:04:05")))
     buffer.WriteString(fmt.Sprintf("%s,", strconv.FormatInt(r.Microsecond, 10)))
     buffer.WriteString(fmt.Sprintf("%s,", strconv.FormatInt(r.ControllerNo, 10)))
