@@ -1,5 +1,6 @@
 /data
 /ddgen
+/log2csv
 .idea
 /models/*.json
 /models/*.log

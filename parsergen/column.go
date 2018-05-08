@@ -1,10 +1,10 @@
 package parsergen
 
 import (
-	"sort"
-	"strings"
 	"fmt"
+	"sort"
 	"strconv"
+	"strings"
 )
 
 type Column struct {
@@ -27,6 +27,7 @@ type Node struct {
 }
 
 var rootFields []*Node = nil
+
 const RESERVED_FUNDAMENTAL_FIELDS = 3
 const RESERVED_BITMAP_FIELDS = 10
 
@@ -34,7 +35,7 @@ const RESERVED_COLUMNS_NO = RESERVED_FUNDAMENTAL_FIELDS + RESERVED_BITMAP_FIELDS
 
 func getRootFields() []*Node {
 	if rootFields == nil {
-		rootFields =  []*Node{
+		rootFields = []*Node{
 			{
 				Index:              0,
 				LogName:            "",
@@ -60,7 +61,7 @@ func getRootFields() []*Node {
 				Children:           nil,
 			},
 		}
-		for i:= 0; i < RESERVED_BITMAP_FIELDS; i++ {
+		for i := 0; i < RESERVED_BITMAP_FIELDS; i++ {
 			rootFields = append(rootFields, &Node{
 				Index:              int64(RESERVED_FUNDAMENTAL_FIELDS + i),
 				LogName:            "",
@@ -119,7 +120,7 @@ func getDatabaseColumnName(keyChains []string) string {
 	return strings.Join(keyChains, ".")
 }
 
-func getGoFieldName(key string) string {
+func GetGoFieldName(key string) string {
 	ret := strings.ToUpper(key[:1]) + key[1:]
 	for _, t := range []string{"[", "]", ":"} {
 		ret = strings.Replace(ret, t, "_", -1)
@@ -168,7 +169,7 @@ func (t *Table) ToNode() *Node {
 						Index:              column.Index,
 						LogName:            key,
 						DatabaseColumnName: getDatabaseColumnName(column.KeyChains),
-						GoFieldName:        getGoFieldName(key),
+						GoFieldName:        GetGoFieldName(key),
 						GoType:             getGoType(column.ValueType),
 						Children:           nil,
 					}
@@ -177,7 +178,7 @@ func (t *Table) ToNode() *Node {
 						Index:              -1,
 						LogName:            key,
 						DatabaseColumnName: "",
-						GoFieldName:        getGoFieldName(key),
+						GoFieldName:        GetGoFieldName(key),
 						GoType:             "",
 						Children:           nil,
 					}

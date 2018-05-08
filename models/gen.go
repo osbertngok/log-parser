@@ -63,6 +63,14 @@ func writeToJSONDict(t *parsergen.Table, filename string) error {
 	return nil
 }
 
+func keyChainsToGoFields(keyChains []string) string {
+	ret := ""
+	for _, item := range keyChains {
+		ret += "." + parsergen.GetGoFieldName(item)
+	}
+	return ret
+}
+
 func writeToRecordStruct(t *parsergen.Table, filename string) error {
 	node := t.ToNode()
 	var (
@@ -70,7 +78,9 @@ func writeToRecordStruct(t *parsergen.Table, filename string) error {
 		wf  *os.File
 		tpl *template.Template
 	)
-	if tpl, err = template.ParseFiles(RECORD_TEMPLATE_FILENAME); err != nil {
+	if tpl, err = template.New("record.txt.tmpl").Funcs(template.FuncMap{
+		"keyChainsToGoFields": keyChainsToGoFields,
+	}).ParseFiles(RECORD_TEMPLATE_FILENAME); err != nil {
 		return err
 	}
 	if wf, err = os.Create(filename); err != nil {
@@ -78,8 +88,10 @@ func writeToRecordStruct(t *parsergen.Table, filename string) error {
 	}
 	if err = tpl.Execute(wf, struct {
 		RecordClass string
+		Table       *parsergen.Table
 	}{
 		node.ToGoClass("", "    "),
+		t,
 	}); err != nil {
 		return err
 	}
