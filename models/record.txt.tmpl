@@ -14,6 +14,20 @@ import (
 func (r *Record) ToCSV() string {
     var buffer bytes.Buffer
 
+    buffer.WriteString(fmt.Sprintf("\"%s\",", r.EventTime.Format("2006-01-02 15:04:05")))
+    buffer.WriteString(fmt.Sprintf("%s,", strconv.FormatInt(r.Microsecond, 10)))
+    buffer.WriteString(fmt.Sprintf("%s,", strconv.FormatInt(r.ControllerNo, 10)))
+    buffer.WriteString(fmt.Sprintf("%s,", strconv.FormatUint(r.Bitmap0, 10)))
+    buffer.WriteString(fmt.Sprintf("%s,", strconv.FormatUint(r.Bitmap1, 10)))
+    buffer.WriteString(fmt.Sprintf("%s,", strconv.FormatUint(r.Bitmap2, 10)))
+    buffer.WriteString(fmt.Sprintf("%s,", strconv.FormatUint(r.Bitmap3, 10)))
+    buffer.WriteString(fmt.Sprintf("%s,", strconv.FormatUint(r.Bitmap4, 10)))
+    buffer.WriteString(fmt.Sprintf("%s,", strconv.FormatUint(r.Bitmap5, 10)))
+    buffer.WriteString(fmt.Sprintf("%s,", strconv.FormatUint(r.Bitmap6, 10)))
+    buffer.WriteString(fmt.Sprintf("%s,", strconv.FormatUint(r.Bitmap7, 10)))
+    buffer.WriteString(fmt.Sprintf("%s,", strconv.FormatUint(r.Bitmap8, 10)))
+    buffer.WriteString(fmt.Sprintf("%s,", strconv.FormatUint(r.Bitmap9, 10)))
+
     {{ range .Table.Data }}
         {{ if eq .ValueType "float64" }}
             buffer.WriteString(fmt.Sprintf("\"%s,\"", strconv.FormatFloat(r{{ keyChainsToGoFields .KeyChains }}, 'f', 6, 64)))

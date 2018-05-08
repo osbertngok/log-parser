@@ -63,8 +63,9 @@ func subParseString(f interface{}, keyChains []string, record interface{}) error
 	}
 	return nil
 }
-func ParseString(log string) (*Record, error) {
+func ParseString(log string, controllerNo int64) (*Record, error) {
 	record := NewRecord()
+	record.ControllerNo = controllerNo
 	// Remove timestamp
 	i := strings.Index(log, ",")
 	if i == -1 {
@@ -118,7 +119,7 @@ func handleInputStream(rd io.Reader, data chan<- string) {
 	close(data)
 }
 
-func FromReader(rd io.Reader) []*Record {
+func FromReader(rd io.Reader, controllerNo int64) []*Record {
 	var ret = make([]*Record, 0)
 	data := make(chan string, 1000)
 
@@ -126,7 +127,7 @@ func FromReader(rd io.Reader) []*Record {
 
 	for record := range data {
 		if record != "" {
-			newRecord, err := ParseString(record)
+			newRecord, err := ParseString(record, controllerNo)
 			if err != nil {
 				fmt.Printf("%s, %v\n", record, err)
 				continue
