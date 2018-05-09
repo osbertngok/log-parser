@@ -3,13 +3,13 @@ package models
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"github.com/osbertngok/log-parser/parsergen"
 	"io"
+	"reflect"
 	"strings"
 	"time"
-	"reflect"
-	"github.com/osbertngok/log-parser/parsergen"
-	"errors"
 )
 
 const RFC3339Micro = "2006-01-02T15:04:05.000000-0700"

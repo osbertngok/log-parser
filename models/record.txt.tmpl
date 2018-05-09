@@ -67,5 +67,7 @@ func (r *Record) ToCSV() string {
         {{ end }}
     {{ end }}
 
-    return buffer.String()
+    ret := buffer.String()
+
+    return ret[:len(ret)-1]
 }
