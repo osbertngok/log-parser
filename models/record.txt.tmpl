@@ -13,8 +13,9 @@ import (
 {{ .RecordClass }}
 
 func handleFloat64(buffer *bytes.Buffer, f float64) {
-    if math.Abs(f) < 0.000001 {
-        buffer.WriteString("0,")
+    floor := math.Floor(f)
+    if math.Abs(f - floor) < 0.000001 {
+        buffer.WriteString(fmt.Sprintf("%s,", strconv.FormatFloat(f, 'f', 0, 64)))
     } else {
         buffer.WriteString(fmt.Sprintf("%s,", strconv.FormatFloat(f, 'f', 6, 64)))
     }
