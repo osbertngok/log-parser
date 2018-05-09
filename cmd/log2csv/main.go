@@ -2,11 +2,11 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"github.com/osbertngok/log-parser/config"
 	"github.com/osbertngok/log-parser/models"
 	"io"
 	"os"
+	"fmt"
 )
 
 func main() {
@@ -31,5 +31,6 @@ func main() {
 
 	for _, record := range records {
 		fmt.Printf("%s\n", record.ToCSV())
+		// record.ToCSV()
 	}
 }

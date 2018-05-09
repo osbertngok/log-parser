@@ -12,6 +12,22 @@ import (
 
 {{ .RecordClass }}
 
+func handleFloat64(buffer *bytes.Buffer, f float64) {
+    if math.Abs(f) < 0.000001 {
+        buffer.WriteString("0,")
+    } else {
+        buffer.WriteString(fmt.Sprintf("%s,", strconv.FormatFloat(f, 'f', 6, 64)))
+    }
+}
+
+func handleString(buffer *bytes.Buffer, s string) {
+    buffer.WriteString(fmt.Sprintf("\"%s\",", s))
+}
+
+func handleBool(buffer *bytes.Buffer, b bool) {
+    buffer.WriteString(fmt.Sprintf("%s,", boolToIntString(b)))
+}
+
 func boolToIntString(b bool) string {
     if b {
         return "1"
@@ -40,17 +56,13 @@ func (r *Record) ToCSV() string {
 
     {{ range .Table.Data }}
         {{ if eq .ValueType "float64" }}
-        if math.Abs(r{{ keyChainsToGoFields .KeyChains }}) < 0.000001 {
-            buffer.WriteString("0,")
-        } else {
-            buffer.WriteString(fmt.Sprintf("%s,", strconv.FormatFloat(r{{ keyChainsToGoFields .KeyChains }}, 'f', 6, 64)))
-        }
+            handleFloat64(&buffer, r{{ keyChainsToGoFields .KeyChains }})
         {{ end }}
         {{ if eq .ValueType "string" }}
-            buffer.WriteString(fmt.Sprintf("\"%s\",", r{{ keyChainsToGoFields .KeyChains }}))
+            handleString(&buffer, r{{ keyChainsToGoFields .KeyChains }})
         {{ end }}
         {{ if eq .ValueType "bool" }}
-            buffer.WriteString(fmt.Sprintf("%s,", boolToIntString(r{{ keyChainsToGoFields .KeyChains }})))
+            handleBool(&buffer, r{{ keyChainsToGoFields .KeyChains }})
         {{ end }}
     {{ end }}
 

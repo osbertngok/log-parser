@@ -3,11 +3,8 @@ package models
 import (
 	"bufio"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"github.com/osbertngok/log-parser/parsergen"
 	"io"
-	"reflect"
 	"strings"
 	"time"
 )
@@ -18,64 +15,25 @@ func NewRecord() *Record {
 	return &Record{}
 }
 
-func subParseString(f interface{}, keyChains []string, record interface{}) error {
-	m := f.(map[string]interface{})
-	if m == nil {
-		return errors.New("not an object")
-	}
-	for k, v := range m {
-		field := reflect.Indirect(reflect.ValueOf(record)).FieldByName(parsergen.GetGoFieldName(k))
-		if field.IsValid() {
-			switch v.(type) {
-			case string:
-				if field.Type().String() == "string" {
-					field.SetString(v.(string))
-				} else {
-					// handle mismatch field
-				}
-			case float64:
-				if field.Type().String() == "float64" {
-					field.SetFloat(v.(float64))
-				} else {
-					// handle mismatch field
-				}
-			case bool:
-				if field.Type().String() == "bool" {
-					field.SetBool(v.(bool))
-				} else {
-					// handle mismatch field
-				}
-			case []interface{}:
-				if field.Type().String() == "string" {
-					field.SetString(fmt.Sprintf("%v", v))
-				} else {
-					// handle mismatch field
-				}
-			case map[string]interface{}:
-				subParseString(v, append(keyChains, k), field.Addr())
-			default:
-				// handle unknown field
-			}
-		} else {
-			fmt.Printf("%v: %s not valid\n", keyChains, parsergen.GetGoFieldName(k))
-			// handle unknown field
-		}
-
-	}
-	return nil
-}
 func ParseString(log string, controllerNo int64, tz string) (*Record, error) {
+	ret := NewRecord()
+
 	loc, err := time.LoadLocation(tz)
 	if err != nil {
 		return nil, err
 	}
-	record := NewRecord()
-	record.ControllerNo = controllerNo
+
 	// Remove timestamp
 	i := strings.Index(log, ",")
 	if i == -1 {
 		return nil, fmt.Errorf("%s does not contain comma", log)
 	}
+	JSONstr := log[i+1:]
+	err = json.Unmarshal([]byte(JSONstr), ret)
+	if err != nil {
+		return nil, err
+	}
+	ret.ControllerNo = controllerNo
 	timestampString := log[:i]
 	timestamp, err := time.Parse(RFC3339Micro, timestampString)
 	if err != nil {
@@ -86,18 +44,10 @@ func ParseString(log string, controllerNo int64, tz string) (*Record, error) {
 	if err != nil {
 		return nil, err
 	}
-	record.EventDate = eventDate
-	record.Microsecond = int64(timestamp.Nanosecond()) / 1000
-	record.EventTime = timestamp.Add(time.Duration(-1*timestamp.Nanosecond()) * time.Nanosecond)
-	JSONstr := log[i+1:]
-	var f interface{}
-	err = json.Unmarshal([]byte(JSONstr), &f)
-	if err != nil {
-		return nil, err
-	}
-	m := f.(map[string]interface{})
-	subParseString(m, []string{}, record)
-	return record, nil
+	ret.EventDate = eventDate
+	ret.Microsecond = int64(timestamp.Nanosecond()) / 1000
+	ret.EventTime = timestamp.Add(time.Duration(-1*timestamp.Nanosecond()) * time.Nanosecond)
+	return ret, nil
 }
 
 func handleInputStream(rd io.Reader, data chan<- string) {
@@ -136,11 +86,11 @@ func FromReader(rd io.Reader, controllerNo int64, tz string) []*Record {
 
 	go handleInputStream(rd, data)
 
-	for record := range data {
-		if record != "" {
-			newRecord, err := ParseString(record, controllerNo, tz)
+	for log := range data {
+		if log != "" {
+			newRecord, err := ParseString(log, controllerNo, tz)
 			if err != nil {
-				fmt.Printf("%s, %v\n", record, err)
+				fmt.Printf("%s, %v\n", log, err)
 				continue
 			}
 			ret = append(ret, newRecord)
