@@ -52,11 +52,12 @@ func subParseString(f interface{}, keyChains []string, record interface{}) error
 					// handle mismatch field
 				}
 			case map[string]interface{}:
-				subParseString(v, append(keyChains, k), record)
+				subParseString(v, append(keyChains, k), field.Addr())
 			default:
 				// handle unknown field
 			}
 		} else {
+			fmt.Printf("%v: %s not valid\n", keyChains, parsergen.GetGoFieldName(k))
 			// handle unknown field
 		}
 

@@ -5,11 +5,20 @@ package models
 import (
     "bytes"
     "fmt"
+    "math"
     "time"
     "strconv"
 )
 
 {{ .RecordClass }}
+
+func boolToIntString(b bool) string {
+    if b {
+        return "1"
+    } else {
+        return "0"
+    }
+}
 
 func (r *Record) ToCSV() string {
     var buffer bytes.Buffer
@@ -31,13 +40,17 @@ func (r *Record) ToCSV() string {
 
     {{ range .Table.Data }}
         {{ if eq .ValueType "float64" }}
-            buffer.WriteString(fmt.Sprintf("\"%s\",", strconv.FormatFloat(r{{ keyChainsToGoFields .KeyChains }}, 'f', 6, 64)))
+        if math.Abs(r{{ keyChainsToGoFields .KeyChains }}) < 0.000001 {
+            buffer.WriteString("0,")
+        } else {
+            buffer.WriteString(fmt.Sprintf("%s,", strconv.FormatFloat(r{{ keyChainsToGoFields .KeyChains }}, 'f', 6, 64)))
+        }
         {{ end }}
         {{ if eq .ValueType "string" }}
             buffer.WriteString(fmt.Sprintf("\"%s\",", r{{ keyChainsToGoFields .KeyChains }}))
         {{ end }}
         {{ if eq .ValueType "bool" }}
-            buffer.WriteString(fmt.Sprintf("%t,", r{{ keyChainsToGoFields .KeyChains }}))
+            buffer.WriteString(fmt.Sprintf("%s,", boolToIntString(r{{ keyChainsToGoFields .KeyChains }})))
         {{ end }}
     {{ end }}
 
