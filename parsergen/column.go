@@ -89,7 +89,7 @@ func (n *Node) ToGoClass(prefix string, tab string) string {
 		tags += fmt.Sprintf(" json:\"%s\"", n.LogName)
 	}
 	if n.Index >= 0 {
-		tags += fmt.Sprintf(" index:%d", n.Index)
+		tags += fmt.Sprintf(" index:\"%d\"", n.Index)
 	}
 	ret := prefix
 	if n.GoFieldName == "" {

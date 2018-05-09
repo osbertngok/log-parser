@@ -37,6 +37,33 @@ func boolToIntString(b bool) string {
     }
 }
 
+func (r *Record) MarkBitmap(index uint64) {
+	quotient := index / 64 // integer division, decimals are truncated
+	remainder := index % 64
+	switch quotient {
+	case 0:
+		r.Bitmap0 |= 1 << remainder
+	case 1:
+		r.Bitmap1 |= 1 << remainder
+	case 2:
+		r.Bitmap2 |= 1 << remainder
+	case 3:
+		r.Bitmap3 |= 1 << remainder
+	case 4:
+		r.Bitmap4 |= 1 << remainder
+	case 5:
+		r.Bitmap5 |= 1 << remainder
+	case 6:
+		r.Bitmap6 |= 1 << remainder
+	case 7:
+		r.Bitmap7 |= 1 << remainder
+	case 8:
+		r.Bitmap8 |= 1 << remainder
+	case 9:
+		r.Bitmap9 |= 1 << remainder
+	}
+}
+
 func (r *Record) ToCSV() string {
     var buffer bytes.Buffer
 

@@ -10,6 +10,7 @@ import (
 	"reflect"
 	"strings"
 	"time"
+	"strconv"
 )
 
 const RFC3339Micro = "2006-01-02T15:04:05.000000-0700"
@@ -18,7 +19,8 @@ func NewRecord() *Record {
 	return &Record{}
 }
 
-func subParseString(f interface{}, keyChains []string, rv reflect.Value) error {
+
+func subParseString(f interface{}, keyChains []string, r *Record, rv reflect.Value) error {
 	m := f.(map[string]interface{})
 	if m == nil {
 		return errors.New("not an object")
@@ -28,13 +30,21 @@ func subParseString(f interface{}, keyChains []string, rv reflect.Value) error {
 		return fmt.Errorf("%v is not a struct", keyChains)
 	}
 	for k, v := range m {
-
 		field := pv.FieldByName(parsergen.GetGoFieldName(k))
+		structField, ok := pv.Type().FieldByName(parsergen.GetGoFieldName(k))
+		if !ok {
+			return fmt.Errorf("field %s not found", k)
+		}
 		if field.IsValid() {
 			switch v.(type) {
 			case string:
 				if field.Type().String() == "string" {
 					field.SetString(v.(string))
+					intStr := structField.Tag.Get("index")
+					index, err := strconv.ParseInt(intStr, 10, 64)
+					if err == nil && index >= 0 {
+						r.MarkBitmap(uint64(index))
+					}
 				} else {
 					fmt.Printf("%s, type mismatch", field.Type().String())
 					// handle mismatch field
@@ -42,6 +52,11 @@ func subParseString(f interface{}, keyChains []string, rv reflect.Value) error {
 			case float64:
 				if field.Type().String() == "float64" {
 					field.SetFloat(v.(float64))
+					intStr := structField.Tag.Get("index")
+					index, err := strconv.ParseInt(intStr, 10, 64)
+					if err == nil && index >= 0  {
+						r.MarkBitmap(uint64(index))
+					}
 				} else {
 					fmt.Printf("%s, type mismatch", field.Type().String())
 					// handle mismatch field
@@ -49,6 +64,11 @@ func subParseString(f interface{}, keyChains []string, rv reflect.Value) error {
 			case bool:
 				if field.Type().String() == "bool" {
 					field.SetBool(v.(bool))
+					intStr := structField.Tag.Get("index")
+					index, err := strconv.ParseInt(intStr, 10, 64)
+					if err == nil && index >= 0  {
+						r.MarkBitmap(uint64(index))
+					}
 				} else {
 					fmt.Printf("%s, type mismatch", field.Type().String())
 					// handle mismatch field
@@ -56,13 +76,18 @@ func subParseString(f interface{}, keyChains []string, rv reflect.Value) error {
 			case []interface{}:
 				if field.Type().String() == "string" {
 					field.SetString(fmt.Sprintf("%v", v))
+					intStr := structField.Tag.Get("index")
+					index, err := strconv.ParseInt(intStr, 10, 64)
+					if err == nil && index >= 0  {
+						r.MarkBitmap(uint64(index))
+					}
 				} else {
 					fmt.Printf("%s, type mismatch", field.Type().String())
 					// handle mismatch field
 				}
 			case map[string]interface{}:
 				if field.CanAddr() {
-					subParseString(v, append(keyChains, k), reflect.ValueOf(field.Addr().Interface()))
+					subParseString(v, append(keyChains, k), r, reflect.ValueOf(field.Addr().Interface()))
 				} else {
 					return fmt.Errorf("Cannot Addr for key %s", k)
 				}
@@ -98,7 +123,7 @@ func ParseString(log string, controllerNo int64, tz string) (*Record, error) {
 		return nil, err
 	}
 	m := f.(map[string]interface{})
-	subParseString(m, []string{}, reflect.ValueOf(ret))
+	subParseString(m, []string{}, ret, reflect.ValueOf(ret))
 	if err != nil {
 		return nil, err
 	}
