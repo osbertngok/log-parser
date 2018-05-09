@@ -7,12 +7,74 @@ import (
 	"io"
 	"strings"
 	"time"
+	"reflect"
+	"github.com/osbertngok/log-parser/parsergen"
+	"errors"
 )
 
 const RFC3339Micro = "2006-01-02T15:04:05.000000-0700"
 
 func NewRecord() *Record {
 	return &Record{}
+}
+
+func subParseString(f interface{}, keyChains []string, rv reflect.Value) error {
+	m := f.(map[string]interface{})
+	if m == nil {
+		return errors.New("not an object")
+	}
+	if rv.Kind() != reflect.Struct {
+		return fmt.Errorf("%v is not a struct", keyChains)
+	}
+	for k, v := range m {
+
+		field := reflect.Indirect(rv).FieldByName(parsergen.GetGoFieldName(k))
+		if field.IsValid() {
+			switch v.(type) {
+			case string:
+				if field.Type().String() == "string" {
+					field.SetString(v.(string))
+				} else {
+					fmt.Printf("%s, type mismatch", field.Type().String())
+					// handle mismatch field
+				}
+			case float64:
+				if field.Type().String() == "float64" {
+					field.SetFloat(v.(float64))
+				} else {
+					fmt.Printf("%s, type mismatch", field.Type().String())
+					// handle mismatch field
+				}
+			case bool:
+				if field.Type().String() == "bool" {
+					field.SetBool(v.(bool))
+				} else {
+					fmt.Printf("%s, type mismatch", field.Type().String())
+					// handle mismatch field
+				}
+			case []interface{}:
+				if field.Type().String() == "string" {
+					field.SetString(fmt.Sprintf("%v", v))
+				} else {
+					fmt.Printf("%s, type mismatch", field.Type().String())
+					// handle mismatch field
+				}
+			case map[string]interface{}:
+				if field.CanAddr() {
+					subParseString(v, append(keyChains, k), reflect.ValueOf(field.Addr().Interface()))
+				} else {
+					return fmt.Errorf("Cannot Addr for key %s", k)
+				}
+
+			default:
+				fmt.Printf("unknown type: %s", reflect.ValueOf(v).Type().String())
+				// handle unknown field
+			}
+		} else {
+			// handle unknown field
+		}
+	}
+	return nil
 }
 
 func ParseString(log string, controllerNo int64, tz string) (*Record, error) {
@@ -29,7 +91,13 @@ func ParseString(log string, controllerNo int64, tz string) (*Record, error) {
 		return nil, fmt.Errorf("%s does not contain comma", log)
 	}
 	JSONstr := log[i+1:]
-	err = json.Unmarshal([]byte(JSONstr), ret)
+	var f interface{}
+	err = json.Unmarshal([]byte(JSONstr), &f)
+	if err != nil {
+		return nil, err
+	}
+	m := f.(map[string]interface{})
+	subParseString(m, []string{}, reflect.ValueOf(ret))
 	if err != nil {
 		return nil, err
 	}
