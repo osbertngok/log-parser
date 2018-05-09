@@ -23,12 +23,13 @@ func subParseString(f interface{}, keyChains []string, rv reflect.Value) error {
 	if m == nil {
 		return errors.New("not an object")
 	}
-	if rv.Kind() != reflect.Struct {
+	pv := reflect.Indirect(rv)
+	if pv.Kind() != reflect.Struct {
 		return fmt.Errorf("%v is not a struct", keyChains)
 	}
 	for k, v := range m {
 
-		field := reflect.Indirect(rv).FieldByName(parsergen.GetGoFieldName(k))
+		field := pv.FieldByName(parsergen.GetGoFieldName(k))
 		if field.IsValid() {
 			switch v.(type) {
 			case string:
