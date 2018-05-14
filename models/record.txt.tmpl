@@ -83,6 +83,7 @@ func (r *Record) ToCSV() string {
     buffer.WriteString(fmt.Sprintf("%s,", strconv.FormatUint(r.Bitmap9, 10)))
 
     {{ range .Table.Data }}
+        // {{ .Index }}
         {{ if eq .ValueType "float64" }}
             handleFloat64(&buffer, r{{ keyChainsToGoFields .KeyChains }})
         {{ end }}
@@ -91,6 +92,9 @@ func (r *Record) ToCSV() string {
         {{ end }}
         {{ if eq .ValueType "bool" }}
             handleBool(&buffer, r{{ keyChainsToGoFields .KeyChains }})
+        {{ end }}
+        {{ if eq .ValueType "mixed" }}
+            handleString(&buffer, r{{ keyChainsToGoFields .KeyChains }})
         {{ end }}
     {{ end }}
 

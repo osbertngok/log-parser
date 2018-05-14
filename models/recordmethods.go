@@ -91,9 +91,11 @@ func subParseString(f interface{}, keyChains []string, r *Record, rv reflect.Val
 				} else {
 					return fmt.Errorf("Cannot Addr for key %s", k)
 				}
+			case nil:
+				fmt.Printf("nil for %s\n", k)
 
 			default:
-				fmt.Printf("unknown type: %s", reflect.ValueOf(v).Type().String())
+				fmt.Printf("unknown type: %T", v)
 				// handle unknown field
 			}
 		} else {
