@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS mdm.order_cycles (
+CREATE TABLE IF NOT EXISTS mpm.{{ toLower .ClassName }} (
     EventDate Date,
     EventTime DateTime,
     Microsecond UInt64,
@@ -14,11 +14,11 @@ CREATE TABLE IF NOT EXISTS mdm.order_cycles (
     Bitmap8 UInt64,
     Bitmap9 UInt64,
 {{ range $index, $element := .Table.Data }}
-    {{if $index}},{{end}}
-    {{ if eq $element.ValueType "float64" }}{{ keyChainsToClickhouseFields $element.KeyChains }} Float64{{ end }}
-    {{ if eq $element.ValueType "string" }}{{ keyChainsToClickhouseFields $element.KeyChains }} String{{ end }}
-    {{ if eq $element.ValueType "bool" }}{{ keyChainsToClickhouseFields $element.KeyChains }} UInt8{{ end }}
-    {{ if eq $element.ValueType "mixed" }}{{ keyChainsToClickhouseFields $element.KeyChains }} String{{ end }}
-    {{ if eq $element.ValueType "array" }}{{ keyChainsToClickhouseFields $element.KeyChains }} String{{ end }}
+    {{- if $index}},{{end}}
+    {{ if eq $element.ValueType "float64" }}{{ keyChainsToClickhouseFields $element.KeyChains }} Float64{{ end -}}
+    {{ if eq $element.ValueType "string" }}{{ keyChainsToClickhouseFields $element.KeyChains }} String{{ end -}}
+    {{ if eq $element.ValueType "bool" }}{{ keyChainsToClickhouseFields $element.KeyChains }} UInt8{{ end -}}
+    {{ if eq $element.ValueType "mixed" }}{{ keyChainsToClickhouseFields $element.KeyChains }} String{{ end -}}
+    {{ if eq $element.ValueType "array" }}{{ keyChainsToClickhouseFields $element.KeyChains }} String{{ end -}}
 {{ end }}
-) ENGINE = MergeTree PARTITION BY toYYYYMM(EventDate) Order By EventDate, EventTime, Microsecond;
+) ENGINE = MergeTree PARTITION BY EventDate ORDER BY (EventDate, EventTime, Microsecond);

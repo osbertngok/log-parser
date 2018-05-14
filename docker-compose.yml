@@ -6,6 +6,8 @@ services:
       - "./clickhouse/log:/var/log/clickhouse-server"
       - "./clickhouse/config/config.xml:/etc/clickhouse-server/config.xml"
       - "./clickhouse/data:/var/lib/clickhouse"
+    environment:
+      - "TZ=Asia/Hong_Kong"
     ports:
       - "8123:8123"
       - "9000:9000"

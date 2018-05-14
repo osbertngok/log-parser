@@ -115,6 +115,7 @@ func writeToCreateSQLScript(t *parsergen.Table, className string) error {
 		tpl *template.Template
 	)
 	if tpl, err = template.New("sql.txt.tmpl").Funcs(template.FuncMap{
+		"toLower": strings.ToLower,
 		"keyChainsToClickhouseFields": keyChainsToClickhouseFields,
 	}).ParseFiles("./sql.txt.tmpl"); err != nil {
 		return err
