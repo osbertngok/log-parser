@@ -13,10 +13,12 @@ CREATE TABLE IF NOT EXISTS mdm.order_cycles (
     Bitmap7 UInt64,
     Bitmap8 UInt64,
     Bitmap9 UInt64,
-{{ range .Table.Data }}
-    {{ if eq .ValueType "float64" }}{{ keyChainsToClickhouseFields .KeyChains }} Float64,{{ end }}
-    {{ if eq .ValueType "string" }}{{ keyChainsToClickhouseFields .KeyChains }} String,{{ end }}
-    {{ if eq .ValueType "bool" }}{{ keyChainsToClickhouseFields .KeyChains }} UInt8,{{ end }}
-    {{ if eq .ValueType "mixed" }}{{ keyChainsToClickhouseFields .KeyChains }} String,{{ end }}
+{{ range $index, $element := .Table.Data }}
+    {{if $index}},{{end}}
+    {{ if eq $element.ValueType "float64" }}{{ keyChainsToClickhouseFields $element.KeyChains }} Float64{{ end }}
+    {{ if eq $element.ValueType "string" }}{{ keyChainsToClickhouseFields $element.KeyChains }} String{{ end }}
+    {{ if eq $element.ValueType "bool" }}{{ keyChainsToClickhouseFields $element.KeyChains }} UInt8{{ end }}
+    {{ if eq $element.ValueType "mixed" }}{{ keyChainsToClickhouseFields $element.KeyChains }} String{{ end }}
+    {{ if eq $element.ValueType "array" }}{{ keyChainsToClickhouseFields $element.KeyChains }} String{{ end }}
 {{ end }}
 ) ENGINE = MergeTree PARTITION BY toYYYYMM(EventDate) Order By EventDate, EventTime, Microsecond;
