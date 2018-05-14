@@ -1,0 +1,15 @@
+version: '3'
+services:
+  ch:
+    image: "yandex/clickhouse-server:1.1.54380"
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    volumes:
+      - "./clickhouse/log/clickhouse-server.log:/var/log/clickhouse-server/clickhouse-server.log"
+      - "./clickhouse/log/clickhouse-server.err.log:/var/log/clickhouse-server/clickhouse-server.err.log"
+      - "./clickhouse/config/config.xml:/etc/clickhouse-server/config.xml"
+      - "./clcikhouse/data:/var/lib/clickhouse"
+
+  tabix:
+    image: "e11it/tabix.ui"
