@@ -4,5 +4,8 @@
 .idea
 /models/*.json
 /models/*.log
-/models/record.go
+/models/*.sql
+/models/ordercycle
+/models/plc
 vendor
+

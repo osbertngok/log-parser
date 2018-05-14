@@ -3,6 +3,7 @@ package parsergen
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -117,7 +118,7 @@ func NewParserHolder() *ParserHolder {
 	return &ph
 }
 
-func FromReader(rd io.Reader) *ParserHolder {
+func FromReader(rd io.Reader) (*ParserHolder, error) {
 	var ret *ParserHolder = nil
 	data := make(chan string, 1000)
 
@@ -137,5 +138,8 @@ func FromReader(rd io.Reader) *ParserHolder {
 			}
 		}
 	}
-	return ret
+	if ret == nil {
+		return ret, errors.New("Nothing from reader stream")
+	}
+	return ret, nil
 }

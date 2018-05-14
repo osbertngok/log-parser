@@ -83,7 +83,7 @@ func getRootFields() []*Node {
 	return rootFields
 }
 
-func (n *Node) ToGoClass(prefix string, tab string) string {
+func (n *Node) ToGoClass(prefix string, tab string, className string) string {
 	tags := ""
 	if n.LogName != "" {
 		tags += fmt.Sprintf(" json:\"%s\"", n.LogName)
@@ -93,7 +93,7 @@ func (n *Node) ToGoClass(prefix string, tab string) string {
 	}
 	ret := prefix
 	if n.GoFieldName == "" {
-		ret += "type Record "
+		ret += fmt.Sprintf("type %s ", className)
 	} else {
 		ret += prefix + n.GoFieldName + " "
 	}
@@ -103,7 +103,7 @@ func (n *Node) ToGoClass(prefix string, tab string) string {
 		ret += "struct {\n"
 		if n.GoFieldName == "" {
 			for _, node := range getRootFields() {
-				ret += node.ToGoClass(prefix+tab, tab)
+				ret += node.ToGoClass(prefix+tab, tab, className)
 			}
 		}
 		keys := make([]string, 0)
@@ -113,7 +113,7 @@ func (n *Node) ToGoClass(prefix string, tab string) string {
 		sort.Strings(keys)
 		for _, key := range keys {
 			v, _ := n.Children[key]
-			ret += v.ToGoClass(prefix+tab, tab)
+			ret += v.ToGoClass(prefix+tab, tab, className)
 		}
 		ret += prefix + "}"
 	}

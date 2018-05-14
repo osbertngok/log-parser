@@ -23,7 +23,10 @@ func main() {
 		}
 		rd = file
 	}
-	latestPH := parsergen.FromReader(rd)
+	latestPH, err := parsergen.FromReader(rd)
+	if err != nil {
+		panic(err)
+	}
 
 	mapJSON, err := json.MarshalIndent(latestPH.Data, "", "  ")
 	if err != nil {

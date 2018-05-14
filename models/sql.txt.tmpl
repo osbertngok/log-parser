@@ -1,0 +1,22 @@
+CREATE TABLE IF NOT EXISTS mdm.order_cycles (
+    EventDate Date,
+    EventTime DateTime,
+    Microsecond UInt64,
+    ControllerNo UInt64,
+    Bitmap0 UInt64,
+    Bitmap1 UInt64,
+    Bitmap2 UInt64,
+    Bitmap3 UInt64,
+    Bitmap4 UInt64,
+    Bitmap5 UInt64,
+    Bitmap6 UInt64,
+    Bitmap7 UInt64,
+    Bitmap8 UInt64,
+    Bitmap9 UInt64,
+{{ range .Table.Data }}
+    {{ if eq .ValueType "float64" }}{{ keyChainsToClickhouseFields .KeyChains }} Float64,{{ end }}
+    {{ if eq .ValueType "string" }}{{ keyChainsToClickhouseFields .KeyChains }} String,{{ end }}
+    {{ if eq .ValueType "bool" }}{{ keyChainsToClickhouseFields .KeyChains }} UInt8,{{ end }}
+    {{ if eq .ValueType "mixed" }}{{ keyChainsToClickhouseFields .KeyChains }} String,{{ end }}
+{{ end }}
+) ENGINE = MergeTree PARTITION BY toYYYYMM(EventDate) Order By EventDate, EventTime, Microsecond;
