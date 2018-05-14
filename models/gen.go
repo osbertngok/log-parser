@@ -13,7 +13,7 @@ import (
 	"text/template"
 )
 
-const DICT_JSON_FILENAME_SUFFIX = "_dict.json"
+const DICT_JSON_FILENAME_SUFFIX = "/dict.json"
 
 func loadTable(t *parsergen.Table, className string) bool {
 	filename := strings.ToLower(className) + DICT_JSON_FILENAME_SUFFIX
@@ -86,6 +86,7 @@ func writeToRecordStruct(t *parsergen.Table, className string) error {
 		tpl *template.Template
 	)
 	if tpl, err = template.New("struct.txt.tmpl").Funcs(template.FuncMap{
+		"toLower": strings.ToLower,
 		"keyChainsToGoFields": keyChainsToGoFields,
 	}).ParseFiles("struct.txt.tmpl"); err != nil {
 		return err

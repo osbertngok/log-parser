@@ -4,7 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/osbertngok/log-parser/config"
-	"github.com/osbertngok/log-parser/models"
+	"github.com/osbertngok/log-parser/models/ordercycle"
 	"io"
 	"os"
 )
@@ -28,7 +28,7 @@ func main() {
 		}
 		rd = file
 	}
-	records := models.FromReader(rd, controllerNo, cfg.Timezone)
+	records := ordercycle.FromReader(rd, controllerNo, cfg.Timezone)
 
 	for _, record := range records {
 		fmt.Printf("%s\n", record.ToCSV())
