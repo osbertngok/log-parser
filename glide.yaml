@@ -1,4 +1,0 @@
-package: github.com/osbertngok/log-parser
-import:
-- package: github.com/caarlos0/env
-  version: ^3.3.0
