@@ -5,6 +5,8 @@ import (
 	"math"
 	"fmt"
 	"strconv"
+	"io"
+	"bufio"
 )
 
 func HandleFloat64(buffer *bytes.Buffer, f float64) {
@@ -35,3 +37,34 @@ func boolToIntString(b bool) string {
 		return "0"
 	}
 }
+
+func HandleInputStream(rd io.Reader, data chan<- string) {
+	reader := bufio.NewReader(rd)
+	var err error = nil
+	for {
+		var subline []byte
+		var line []byte
+		isPrefix := true
+		ct := 0
+
+		// read until reaches end of line (!isPrefix),
+		// or reaches end of file (err)
+		for isPrefix && err == nil {
+			ct++
+			// read until buffer is full (isPrefix),
+			// or reaches end of line (!isPrefix),
+			// or reaches end of file (err)
+			subline, isPrefix, err = reader.ReadLine()
+			line = append(line, subline...)
+		}
+		data <- string(line)
+		// if reaches end of file (or other error)
+		// break the loop
+		// and close the channel
+		if err != nil {
+			break
+		}
+	}
+	close(data)
+}
+

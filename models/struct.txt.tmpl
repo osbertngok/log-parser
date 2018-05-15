@@ -3,7 +3,6 @@
 
 package {{ toLower .ClassName }}
 import (
-    "bufio"
     "bytes"
     "encoding/json"
     "errors"
@@ -221,41 +220,11 @@ func ParseString(log string, controllerNo int64, tz string) (*{{ .ClassName }}, 
 	return ret, nil
 }
 
-func handleInputStream(rd io.Reader, data chan<- string) {
-	reader := bufio.NewReader(rd)
-	var err error = nil
-	for {
-		var subline []byte
-		var line []byte
-		isPrefix := true
-		ct := 0
-
-		// read until reaches end of line (!isPrefix),
-		// or reaches end of file (err)
-		for isPrefix && err == nil {
-			ct++
-			// read until buffer is full (isPrefix),
-			// or reaches end of line (!isPrefix),
-			// or reaches end of file (err)
-			subline, isPrefix, err = reader.ReadLine()
-			line = append(line, subline...)
-		}
-		data <- string(line)
-		// if reaches end of file (or other error)
-		// break the loop
-		// and close the channel
-		if err != nil {
-			break
-		}
-	}
-	close(data)
-}
-
 func FromReader(rd io.Reader, controllerNo int64, tz string) []*{{ .ClassName }} {
 	var ret = make([]*{{ .ClassName }}, 0)
 	data := make(chan string, 1000)
 
-	go handleInputStream(rd, data)
+	go common.HandleInputStream(rd, data)
 
 	for log := range data {
 		if log != "" {
