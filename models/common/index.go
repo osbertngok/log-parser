@@ -1,17 +1,35 @@
 package common
 
 import (
-	"bytes"
-	"math"
-	"fmt"
-	"strconv"
-	"io"
 	"bufio"
+	"bytes"
+	"fmt"
+	"io"
+	"math"
+	"strconv"
+	"time"
 )
+
+type IRow struct {
+	EventDate    time.Time
+	EventTime    time.Time
+	Microsecond  int64
+	ControllerNo int64
+	Bitmap0      uint64
+	Bitmap1      uint64
+	Bitmap2      uint64
+	Bitmap3      uint64
+	Bitmap4      uint64
+	Bitmap5      uint64
+	Bitmap6      uint64
+	Bitmap7      uint64
+	Bitmap8      uint64
+	Bitmap9      uint64
+}
 
 func HandleFloat64(buffer *bytes.Buffer, f float64) {
 	floor := math.Floor(f)
-	if math.Abs(f - floor) < 0.000001 {
+	if math.Abs(f-floor) < 0.000001 {
 		buffer.WriteString(fmt.Sprintf("%s,", strconv.FormatFloat(f, 'f', 0, 64)))
 	} else {
 		buffer.WriteString(fmt.Sprintf("%s,", strconv.FormatFloat(f, 'f', 6, 64)))
@@ -67,4 +85,3 @@ func HandleInputStream(rd io.Reader, data chan<- string) {
 	}
 	close(data)
 }
-
