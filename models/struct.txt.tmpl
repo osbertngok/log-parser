@@ -9,8 +9,8 @@ import (
     "errors"
     "fmt"
     "github.com/osbertngok/log-parser/parsergen"
+    "github.com/osbertngok/log-parser/models/common"
     "io"
-    "math"
     "strconv"
     "strings"
     "reflect"
@@ -18,35 +18,6 @@ import (
 )
 
 {{ .RecordClass }}
-
-func handleFloat64(buffer *bytes.Buffer, f float64) {
-    floor := math.Floor(f)
-    if math.Abs(f - floor) < 0.000001 {
-        buffer.WriteString(fmt.Sprintf("%s,", strconv.FormatFloat(f, 'f', 0, 64)))
-    } else {
-        buffer.WriteString(fmt.Sprintf("%s,", strconv.FormatFloat(f, 'f', 6, 64)))
-    }
-}
-
-func handleString(buffer *bytes.Buffer, s string) {
-    buffer.WriteString(fmt.Sprintf("\"%s\",", s))
-}
-
-func muteAsString(buffer *bytes.Buffer) {
-    buffer.WriteString("\"\",")
-}
-
-func handleBool(buffer *bytes.Buffer, b bool) {
-    buffer.WriteString(fmt.Sprintf("%s,", boolToIntString(b)))
-}
-
-func boolToIntString(b bool) string {
-    if b {
-        return "1"
-    } else {
-        return "0"
-    }
-}
 
 func (r *{{ .ClassName }}) MarkBitmap(index uint64) {
 	quotient := index / 64 // integer division, decimals are truncated
@@ -96,19 +67,19 @@ func (r *{{ .ClassName }}) ToCSV() string {
     {{ range .Table.Data }}
         // {{ .Index }}
         {{ if eq .ValueType "float64" }}
-            handleFloat64(&buffer, r{{ keyChainsToGoFields .KeyChains }})
+            common.HandleFloat64(&buffer, r{{ keyChainsToGoFields .KeyChains }})
         {{ end }}
         {{ if eq .ValueType "string" }}
-            handleString(&buffer, r{{ keyChainsToGoFields .KeyChains }})
+            common.HandleString(&buffer, r{{ keyChainsToGoFields .KeyChains }})
         {{ end }}
         {{ if eq .ValueType "bool" }}
-            handleBool(&buffer, r{{ keyChainsToGoFields .KeyChains }})
+            common.HandleBool(&buffer, r{{ keyChainsToGoFields .KeyChains }})
         {{ end }}
         {{ if eq .ValueType "array" }}
-            muteAsString(&buffer)
+            common.MuteAsString(&buffer)
         {{ end }}
         {{ if eq .ValueType "mixed" }}
-            handleString(&buffer, r{{ keyChainsToGoFields .KeyChains }})
+            common.HandleString(&buffer, r{{ keyChainsToGoFields .KeyChains }})
         {{ end }}
     {{ end }}
 
